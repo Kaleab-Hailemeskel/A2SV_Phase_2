@@ -12,7 +12,7 @@ func calcAverage(sub_grade map[string]float32) float32{
 }
 func main() {
 	var num_grade int
-	var subject_grade = make(map[string]float32)
+	var subject_grade = map[string]float32 {}
 	
 	fmt.Println("Welcome to Grade Calculator")
 	fmt.Print("How many courses do you want to enter: ")
