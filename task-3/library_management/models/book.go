@@ -8,7 +8,7 @@ const (
 )
 
 func (book Book) String() string {
-	return fmt.Sprintf("%d\t%s\t\t\t\t%s\t\t%s", book.ID, book.Title, book.Author, book.Status)
+	return fmt.Sprintf("%d | %s | %s | %s", book.ID, book.Title, book.Author, book.Status)
 }
 
 type Book struct {
