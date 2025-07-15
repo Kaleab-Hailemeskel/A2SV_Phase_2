@@ -3,17 +3,18 @@ package main
 import (
 	"fmt"
 )
-func calcAverage(sub_grade map[string]float32) float32{
+
+func calcAverage(sub_grade map[string]float32) float32 {
 	res := float32(0)
-	for _, val := range sub_grade{
+	for _, val := range sub_grade {
 		res += val
 	}
 	return res / float32(len(sub_grade))
 }
 func main() {
 	var num_grade int
-	var subject_grade = map[string]float32 {}
-	
+	var subject_grade = map[string]float32{}
+
 	fmt.Println("Welcome to Grade Calculator")
 	fmt.Print("How many courses do you want to enter: ")
 	fmt.Scanf("%d", &num_grade)
@@ -22,19 +23,20 @@ func main() {
 
 	var last_subject string
 	var last_grade float32
-	for i:= 0; i < num_grade;{
-		fmt.Print(i + 1, ") ")
+
+	for i := 0; i < num_grade; {
+		fmt.Print(i+1, ") ")
 		_, err := fmt.Scan(&last_subject, &last_grade)
-		if last_grade >= 0 && last_grade < 101 && last_subject != "" && err == nil{
+		if last_grade >= 0 && last_grade < 101 && last_subject != "" && err == nil {
 			i++ // only accept the next sub-grade pair if the current is valid, otherwise prompt again and again
 			fmt.Println("Saved")
 			subject_grade[last_subject] = last_grade
-		}else{
-			if last_subject == ""{
+		} else {
+			if last_subject == "" {
 				fmt.Println("Empty Subject Stirng is Not Valid")
-			}else if last_grade < 0 || last_grade > 100{
+			} else if last_grade < 0 || last_grade > 100 {
 				fmt.Printf("Invalid Grade report %f\n", last_grade)
-			}else{
+			} else {
 				fmt.Println("Invalid grade value")
 			}
 		}
