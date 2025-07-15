@@ -93,6 +93,7 @@ func StartLibrary(library *services.Library) {
 		choice := strings.TrimSpace(input)
 
 		switch choice {
+		// todo: case 10 and 11 are for developers test only.
 		case "10":
 			fmt.Printf("Total Number of Books:  %d\n", len(library.Books))
 			for _, val := range library.Books {
@@ -104,6 +105,7 @@ func StartLibrary(library *services.Library) {
 			for _, val := range library.Members {
 				fmt.Println(val.ID, "\t\t", val.Name, "\t\t\t", val.BorrowedBooks)
 			}
+		// todo:
 		case "1":
 			for {
 				fmt.Print("Enter Book ID: ")
