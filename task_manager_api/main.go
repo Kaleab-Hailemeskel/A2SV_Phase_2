@@ -12,9 +12,8 @@ func main() {
 	router.GET("/task", getTasks)
 	router.GET("/task/:id", getTaskByID)
 	router.POST("/task/", postTask)
-	router.PUT("/task/:id", postTaskByID)
+	router.PUT("/task/:id", putTaskByID)
 	router.DELETE("/task/:id", deleteTaskByID)
-	
 
 	router.Run() // Listen and serve on 0.0.0.0:8080
 	fmt.Println("live server")
@@ -41,30 +40,30 @@ func postTask(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Can't save a new task"})
 
 }
-func postTaskByID(ctx *gin.Context) {
-	taskID := ctx.Param("id")
-	var requestTask Task
-	if bindErr := ctx.BindJSON(requestTask); bindErr != nil {
-		ctx.IndentedJSON(http.StatusConflict, gin.H{"message": "Invalid task type"})
+func putTaskByID(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	var updatedTask Task
+
+	if err := ctx.ShouldBindJSON(&updatedTask); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	for index, task := range tasks {
-		if task.ID == taskID {
-			// only couple of fields need to be edited
-			if requestTask.Title != "" {
-				tasks[index].Title = requestTask.Title
+
+	for i, task := range tasks {
+		if task.ID == id {
+			if updatedTask.Title != "" {
+				tasks[i].Title = updatedTask.Title
 			}
-			if requestTask.Description != "" {
-				tasks[index].Description = requestTask.Description
+			if updatedTask.Description != "" {
+				tasks[i].Description = updatedTask.Description
 			}
-			if requestTask.Status != "" {
-				tasks[index].Status = requestTask.Status
-			}
-			ctx.IndentedJSON(http.StatusOK, gin.H{"message": "Task Updated!"})
+			ctx.JSON(http.StatusOK, gin.H{"message": "Task updated"})
 			return
 		}
 	}
-	ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with ID %s not found", taskID)})
+
+	ctx.JSON(http.StatusNotFound, gin.H{"message": "Task not found"})
 }
 func getTasks(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, tasks)
@@ -77,5 +76,5 @@ func getTaskByID(ctx *gin.Context) {
 			return
 		}
 	}
-	ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with task id <%s> is not found", urlID)})
+	ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": fmt.Sprintf("Task with task id <%s> is not found", string(urlID))})
 }
