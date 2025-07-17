@@ -9,13 +9,13 @@ import (
 
 func main() {
 	router := gin.Default()
-	router.GET("/task", getTasks)
-	router.GET("/task/:id", getTaskByID)
-	router.POST("/task/", postTask)
-	router.PUT("/task/:id", putTaskByID)
-	router.DELETE("/task/:id", deleteTaskByID)
+	router.GET("/tasks", getTasks)
+	router.GET("/tasks/:id", getTaskByID)
+	router.POST("/tasks/", postTask)
+	router.PUT("/tasks/:id", putTaskByID)
+	router.DELETE("/tasks/:id", deleteTaskByID)
 
-	router.Run() // Listen and serve on 0.0.0.0:8080
+	router.Run("localhost:8080") // Listen and serve on 0.0.0.0:8080
 	fmt.Println("live server")
 }
 
@@ -32,7 +32,15 @@ func deleteTaskByID(ctx *gin.Context) {
 }
 func postTask(ctx *gin.Context) {
 	var newtask Task
-	if err := ctx.BindJSON(&newtask); err == nil {
+	_foundDuplicate := func(t Task) bool { // todo: a simple func that check if there is already a task with the same ID.
+		for _, each_task := range tasks {
+			if each_task.ID == t.ID {
+				return true
+			}
+		}
+		return false
+	}
+	if err := ctx.BindJSON(&newtask); err == nil && !_foundDuplicate(newtask) {
 		tasks = append(tasks, newtask)
 		ctx.IndentedJSON(http.StatusCreated, newtask)
 		return
