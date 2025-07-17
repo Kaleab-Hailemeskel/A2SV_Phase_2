@@ -45,7 +45,7 @@ func postTask(ctx *gin.Context) {
 		ctx.IndentedJSON(http.StatusCreated, newtask)
 		return
 	}
-	ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Can't save a new task"})
+	ctx.IndentedJSON(http.StatusConflict, gin.H{"message": "Can't save a new task"})
 
 }
 func putTaskByID(ctx *gin.Context) {
