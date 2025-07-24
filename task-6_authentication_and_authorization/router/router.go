@@ -22,7 +22,7 @@ func StartEngine(port_number string) {
 
 	router.POST("/register", controllers.Register)
 	router.POST("/login", controllers.Login)
-	
+
 	router.GET("/whoAmI", middleware.Authentication, controllers.GiveMeMyInfo)
 
 	taskNeedAuthentication := router.Group("/tasks")
@@ -93,7 +93,7 @@ func StartEngine(port_number string) {
 	fmt.Println()
 
 	fmt.Println("********************************")
-	log.Println("*      DataBase Shutdown       *")
+	fmt.Println("*      DataBase Shutdown       *")
 	fmt.Println("********************************")
 
 	fmt.Println()

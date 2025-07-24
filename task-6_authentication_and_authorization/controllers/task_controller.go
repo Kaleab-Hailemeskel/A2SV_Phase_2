@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"task-6_authentication_and_authorization/data"
 	"task-6_authentication_and_authorization/middleware"
@@ -32,6 +31,9 @@ func DeleteTaskByID(ctx *gin.Context) {
 
 }
 func PostTask(ctx *gin.Context) {
+	// I neeed to use an inplace temporary struct because,
+	// unless it will cause a trouble with the real Task struct
+	// having a required email while marshalling and unmarshalling
 	var tempTask struct {
 		ID          string    `json:"id" binding:"required"`
 		Title       string    `json:"title" binding:"required,min=3,max=100"`
@@ -61,7 +63,6 @@ func PostTask(ctx *gin.Context) {
 			Title:       tempTask.Title}
 		err = data.InsertOne(newTask)
 		if err != nil {
-			fmt.Println("\tThe Email Error Was")
 			ctx.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -136,6 +137,7 @@ func GetTaskByID(ctx *gin.Context) {
 
 }
 
+
 func Register(c *gin.Context) {
 	var user models.User
 	if c.ShouldBindBodyWithJSON(&user) != nil || (user.Email == "" || user.Password == "" || user.Role == "") {
@@ -196,7 +198,6 @@ func Login(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Cookies were sent"})
 
 }
-
 func GiveMeMyInfo(c *gin.Context) {
 	userResult, exists := c.Get("currUser")
 	if !exists {

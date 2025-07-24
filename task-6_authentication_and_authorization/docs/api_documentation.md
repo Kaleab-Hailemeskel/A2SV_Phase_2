@@ -1,365 +1,147 @@
-## Task Manager API Documentation
+# 🛡️ Task Management API with Authentication & Authorization
 
-This document describes the RESTful API for managing tasks, built with Go and leveraging MongoDB for data persistence.
+This project is a secure task management API built using **Go**, **Gin**, **MongoDB**, and **JWT-based authentication**. It provides user registration, login, task creation, editing, deletion, and retrieval — all gated by access control mechanisms.
 
-### 1. API Overview
+---
+## 🚀 Technologies Used
 
-The Task Manager API provides a set of endpoints to perform standard Create, Read, Update, and Delete (CRUD) operations on task resources. Each task is identified by a unique ID and includes properties such as title, description, due date, and status.
+- **Go** — main programming language
+- **Gin** — web framework for routing and middleware
+- **MongoDB** — persistent storage for users and tasks
+- **bcrypt** — password hashing
+- **JWT (JSON Web Tokens)** — authentication mechanism
+---
+## 🗺️ Project Structure
+```
+task-6_authentication_and_authorization/ 
+	│ 
+	├── controllers/ → API endpoint handlers (task & user operations) 
+	├── data/ → MongoDB connectivity and database actions 
+	├── middleware/ → JWT authentication and role-based access control 
+	├── models/ → Struct definitions (User, Task) 
+	├── router/ → Gin engine setup and graceful shutdown 
+	└── main.go → App entry point
 
-### 2. API Endpoints
+```
+---
+## 👥 User Model
 
-The API base URL is assumed to be `http://localhost:8081`.
+```go
+type User struct {
+  Email    string `json:"email" binding:"required,email"`
+  Password string `json:"password" binding:"required"`
+  Role     string `json:"role" binding:"required"` // ADMIN or USER
+}
+````
+
+---
+## 📋 Task Model
+
+```go
+type Task struct {
+  ID          string    `json:"id" binding:"required"`
+  OwnerEmail  string    `json:"ownerEmail" binding:"required,email"`
+  Title       string    `json:"title" binding:"required,min=3,max=100"`
+  Description string    `json:"description" binding:"required"`
+  DueDate     time.Time `json:"due_date" binding:"required"`
+  Status      string    `json:"status" binding:"required"`
+}
+```
+
+---
+## ✅ API Endpoints
+
+### 🔐 Auth Routes
+
+|Method|Route|Description|
+|---|---|---|
+|POST|`/register`|Register a new user|
+|POST|`/login`|Login & get JWT|
+
+### 👤 User Info
+
+|Method|Route|Middleware|Description|
+|---|---|---|---|
+|GET|`/whoAmI`|`Authentication`|Return user info|
+
+### 📋 Task Routes
+
+All under `/tasks` and gated by `Authentication` middleware.
+
+|Method|Route|Extra Middleware|Description|
+|---|---|---|---|
+|GET|`/tasks`|-|Get tasks (admin sees all)|
+|POST|`/tasks`|-|Create new task|
+|GET|`/tasks/:id`|`IsAuthorizedUserForTaskManipulation`|Get task by ID|
+|PUT|`/tasks/:id`|`IsAuthorizedUserForTaskManipulation`|Update task|
+|DELETE|`/tasks/:id`|`IsAuthorizedUserForTaskManipulation`|Delete task|
+
+---
+## 🔐 Middleware Logic
+
+### Authentication
+
+- Verifies JWT from cookie
+- Validates expiration time
+- Fetches user details from DB
+- Injects `currUser` into context
+
+### Authorization
+
+- **IsAdmin**: ensures `ADMIN` role
+- **IsAuthorizedUserForTaskManipulation**: user must be owner or admin
 
 ---
 
-#### `POST /tasks/` - Create a New Task
+## 📦 Database Logic
 
-- **Description:** Creates a new task record in the database. The task's ID must be unique.
+### Task Operations (`data/task_service.go`)
+
+- Connects to `TaskBase.Tasks`
+- Functions:
+    - `InsertOne(task)`
+    - `FindALL(email)`
+    - `FindByID(id)`
+    - `UpdateOne(id, updatedTask)`
+    - `DeleteOne(id)`
+
+### User Operations (`data/user_service.go`)
+
+- Connects to `UserBase.users`
+- Functions:
+    - `InsertOneUser(user)`
+    - `FindOneUser(email)`
+
+---
+
+## 🔄 Server Lifecycle
+
+Defined in `router/StartEngine(port)`:
+
+- Initializes Gin routes
+- Connects to MongoDB
+- Awaits user ENTER key to gracefully shut down
+- Closes MongoDB connection
+
+---
+
+## 🏁 Getting Started
+
+1. Make sure MongoDB is running locally at `mongodb://localhost:27017`
+2. Run the app:
     
-- **HTTP Method:** `POST`
-    
-- **Request Path:** `/tasks/`
-    
-- **Request Body (JSON):**
-    
-    JSON
-    
+    ```bash
+    go run main.go
     ```
-    {
-        "id": "string",
-        "title": "string",
-        "description": "string",
-        "due_date": "YYYY-MM-DDTHH:MM:SSZ",
-        "status": "string"
-    }
-    ```
     
-    - `id`: (Required, string) A unique identifier for the task.
-        
-    - `title`: (Required, string) The title of the task.
-        
-    - `description`: (Optional, string) A detailed description of the task.
-        
-    - `due_date`: (Required, string, ISO 8601 format) The deadline for the task.
-        
-    - `status`: (Required, string) The current status of the task (e.g., "pending", "completed").
-        
-- **Responses:**
-    
-    - **`201 Created`**: Task successfully created.
-        
-        JSON
-        
-        ```
-        {
-            "id": "task_001",
-            "title": "Complete Project Report",
-            "description": "Write and finalize the quarterly project report for Q3.",
-            "due_date": "2025-07-30T17:00:00Z",
-            "status": "pending"
-        }
-        ```
-        
-    - **`400 Bad Request`**: If the request body is malformed or invalid JSON.
-        
-        JSON
-        
-        ```
-        {"message": "Invalid request body: json: cannot unmarshal string into Go struct field Task.due_date of type time.Time"}
-        ```
-        
-    - **`409 Conflict`**: If a task with the provided `id` already exists.
-        
-        JSON
-        
-        ```
-        {"error": "task with ID < task_001 > Already exists."}
-        ```
-        
-    - **`500 Internal Server Error`**: If a database operation fails.
-        
-        JSON
-        
-        ```
-        {"error": "Failed to save new task: <database_error_details>"}
-        ```
-        
-    - **`503 Service Unavailable`**: If the server cannot connect to the database.
-        
-        JSON
-        
-        ```
-        {"Error": "Database Connection Unavailable"}
-        ```
-        
+3. Register a user via `/register`
+4. Login via `/login` to receive JWT cookie
+5. Interact with `/tasks` endpoints
+
+---
+## 🙌 Author
+
+This project was built by **Kaleab** — a fourth-year Software Engineering student at AASTU, deeply passionate about embedded systems, backend architecture, and building secure APIs with Golang.
 
 ---
 
-#### `GET /tasks` - Retrieve All Tasks
-
-- **Description:** Fetches all task records currently stored in the database.
-    
-- **HTTP Method:** `GET`
-    
-- **Request Path:** `/tasks`
-    
-- **Request Body:** None
-    
-- **Responses:**
-    
-    - **`200 OK`**: Successfully retrieved tasks.
-        
-        JSON
-        
-        ```
-        [
-            {
-                "id": "task_001",
-                "title": "Complete Project Report",
-                "description": "Write and finalize the quarterly project report for Q3.",
-                "due_date": "2025-07-30T17:00:00Z",
-                "status": "pending"
-            },
-            {
-                "id": "task_002",
-                "title": "Review Code",
-                "description": "Review pull request #123 for feature X.",
-                "due_date": "2025-07-25T10:00:00Z",
-                "status": "in_progress"
-            }
-        ]
-        ```
-        
-    - **`200 OK`**: If no tasks are found.
-        
-        JSON
-        
-        ```
-        {"message": "No task Found"}
-        ```
-        
-    - **`500 Internal Server Error`**: If a database operation fails.
-        
-        JSON
-        
-        ```
-        {"error": "Error while fetching All Data from DB: <database_error_details>"}
-        ```
-        
-    - **`503 Service Unavailable`**: If the server cannot connect to the database.
-        
-        JSON
-        
-        ```
-        {"Error": "Database Connection Unavailable"}
-        ```
-        
-
----
-
-#### `GET /tasks/:id` - Retrieve Task by ID
-
-- **Description:** Fetches a single task record using its unique ID.
-    
-- **HTTP Method:** `GET`
-    
-- **Request Path:** `/tasks/{id}` (e.g., `/tasks/task_001`)
-    
-- **Request Body:** None
-    
-- **Responses:**
-    
-    - **`200 OK`**: Task successfully retrieved.
-        
-        JSON
-        
-        ```
-        {
-            "id": "task_001",
-            "title": "Complete Project Report",
-            "description": "Write and finalize the quarterly project report for Q3.",
-            "due_date": "2025-07-30T17:00:00Z",
-            "status": "pending"
-        }
-        ```
-        
-    - **`200 OK`**: If no task is found with the given ID.
-        
-        JSON
-        
-        ```
-        {"message": "No task Found with ID task_005"}
-        ```
-        
-    - **`500 Internal Server Error`**: If a database operation fails.
-        
-        JSON
-        
-        ```
-        {"error": "Failed to find task: <database_error_details>"}
-        ```
-        
-    - **`503 Service Unavailable`**: If the server cannot connect to the database.
-        
-        JSON
-        
-        ```
-        {"Error": "Database Connection Unavailable"}
-        ```
-        
-
----
-
-#### `PUT /tasks/:id` - Update Task by ID
-
-- **Description:** Updates an existing task identified by its ID with the provided data. The entire task object should be sent.
-    
-- **HTTP Method:** `PUT`
-    
-- **Request Path:** `/tasks/{id}` (e.g., `/tasks/task_001`)
-    
-- **Request Body (JSON):** Same structure as `POST /tasks/`.
-    
-    - Note: The `id` in the URL path (`:id`) specifies the task to be updated. The `id` in the request body (`updatedTask.ID`) is the _new_ ID for the task if you intend to change it.
-        
-- **Responses:**
-    
-    - **`200 OK`**: Task successfully updated.
-        
-        JSON
-        
-        ```
-        {"message": "Task updated successfully"}
-        ```
-        
-    - **`400 Bad Request`**: If the request body is malformed or invalid JSON.
-        
-        JSON
-        
-        ```
-        {"error": "Invalid request body: json: cannot unmarshal number into Go struct field Task.id of type string"}
-        ```
-        
-    - **`404 Not Found`**: If no task with the original ID is found to update.
-        
-        JSON
-        
-        ```
-        {"error": "no task with ID task_999 found to update"}
-        ```
-        
-    - **`409 Conflict`**: If the `id` in the request body is changed and already exists for another task.
-        
-        JSON
-        
-        ```
-        {"error": "task With The new ID already exists, Use Unique ID"}
-        ```
-        
-    - **`500 Internal Server Error`**: If a database operation fails, or no data was actually modified (e.g., you sent the exact same data).
-        
-        JSON
-        
-        ```
-        {"error": "Failed to update task: <database_error_details>"}
-        {"error": "no Data modified for task with ID task_001"}
-        ```
-        
-    - **`503 Service Unavailable`**: If the server cannot connect to the database.
-        
-        JSON
-        
-        ```
-        {"Error": "Database Connection Unavailable"}
-        ```
-        
-
----
-
-#### `DELETE /tasks/:id` - Delete Task by ID
-
-- **Description:** Deletes a task record from the database using its unique ID.
-    
-- **HTTP Method:** `DELETE`
-    
-- **Request Path:** `/tasks/{id}` (e.g., `/tasks/task_001`)
-    
-- **Request Body:** None
-    
-- **Responses:**
-    
-    - **`202 Accepted`**: Task successfully deleted.
-        
-        JSON
-        
-        ```
-        {"message": "Task with ID task_001 got Deleted"}
-        ```
-        
-    - **`404 Not Found`**: If no task with the provided ID is found.
-        
-        JSON
-        
-        ```
-        {"Error": "task with ID task_999 isn't found"}
-        ```
-        
-    - **`500 Internal Server Error`**: If a database operation fails.
-        
-        JSON
-        
-        ```
-        {"Error": "Failed to delete task: <database_error_details>"}
-        ```
-        
-    - **`503 Service Unavailable`**: If the server cannot connect to the database.
-        
-        JSON
-        
-        ```
-        {"Error": "Database Connection Unavailable"}
-        ```
-        
-
----
-
-### 3. Database Integration
-
-The Task Manager API utilizes **MongoDB** as its persistent data store.
-
-- **Connection Details:**
-    
-    - **Connection String:** `mongodb://localhost:27017`
-        
-    - **Database Name:** `TaskBase`
-        
-    - **Collection Name:** `Tasks`
-        
-    - These details are configured as constants within the `data` package (`task_service.go`).
-        
-- **Connection Management:**
-    
-    - The `data.ConnectToMongo()` function establishes the initial connection to the MongoDB server during application startup. It includes a ping to ensure the connection is active.
-        
-    - The `data.IsClientConnected()` function provides a basic check of the client's connection status before any database operation is attempted by the controllers.
-        
-    - Crucially, `data.CloseMongoDB()` is called during the application's graceful shutdown process to ensure that all open database connections are properly closed and resources are released.
-            
-- **Data Operations (CRUD):** The `data` package (`task_service.go`) encapsulates all direct interactions with the MongoDB collection:
-    
-    - `InsertOne(task models.Task)`: Inserts a single new task document. Includes a check to prevent duplicate `id` values.
-        
-    - `FindALL() ([]models.Task, error)`: Retrieves all documents from the `Tasks` collection.
-        
-    - `FindByID(taskID string) (*models.Task, error)`: Retrieves a single document by its `id`. Returns `mongo.ErrNoDocuments` if not found.
-        
-    - `UpdateOne(taskID string, updatedTask models.Task)`: Updates a single document identified by `taskID`. Includes checks for existing new `ID` during update and whether any data was actually modified.
-        
-    - `DeleteOne(taskID string)`: Deletes a single document by its `id`.
-
-
-<div style="text-align: center;"> 
-	![alt text](image.png)
-</div>
-
-👍
