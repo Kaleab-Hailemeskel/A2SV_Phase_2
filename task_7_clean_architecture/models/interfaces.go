@@ -1,6 +1,8 @@
 package models
 
-import "github.com/gin-gonic/gin"
+import (
+	"time"
+)
 
 type IUserDataBase interface {
 	FindUserByEmail(userEmail string) (*User, error)
@@ -20,8 +22,8 @@ type ITaskDataBase interface {
 }
 
 type IAuthentication interface {
-	GetSecurityTokenFromClinet(ctx *gin.Context) (string, error)
-	SendSecurityTokenToClinet(ctx *gin.Context, JWTBody map[string]interface{}) error
+	GetUserEmailFromSecurityToken(tokenString string) (string, error)
+	GenerateSecurityToken(JWTBody map[string]interface{}) (string, *time.Duration)
 }
 
 type IPasswordService interface {

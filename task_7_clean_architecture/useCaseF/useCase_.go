@@ -1,4 +1,4 @@
-package useCase
+package useCaseF
 
 import (
 	"fmt"
@@ -35,7 +35,6 @@ func (uc *UseCase) Register(user *models.User) error {
 	return uc.userDataBase.StoreUser(user)
 }
 func (uc *UseCase) LoginHandler(user *models.User) error {
-	// aka LoginHandler
 	userFromDB, err := uc.userDataBase.FindUserByEmail(user.Email)
 	if err != nil {
 		return fmt.Errorf("user didn't exist, better register")

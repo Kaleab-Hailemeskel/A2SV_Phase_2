@@ -6,22 +6,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type PasswordService struct {
+type passwordService struct {
 	passCost int
 }
 
 func NewPasswordService() models.IPasswordService {
 
-	return &PasswordService{
+	return &passwordService{
 		passCost: bcrypt.DefaultCost,
 	}
 }
 
-func (passService *PasswordService) HashPassword(orginalPass string) (string, error) {
+func (passService *passwordService) HashPassword(orginalPass string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(orginalPass), passService.passCost)
 	return string(hashedPassword), err
 }
 
-func (passService *PasswordService) IsCorrectPass(orginalPass string, hashedPass string) bool {
+func (passService *passwordService) IsCorrectPass(orginalPass string, hashedPass string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPass), []byte(orginalPass)) == nil
 }

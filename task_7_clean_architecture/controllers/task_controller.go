@@ -6,19 +6,17 @@ import (
 
 	"task_7_clean_architecture/infrastructure"
 	"task_7_clean_architecture/models"
-	useCase "task_7_clean_architecture/useCaseF"
+	"task_7_clean_architecture/useCaseF"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-var currentUser string = infrastructure.CURR_USER
-
 type UserController struct {
-	userUseCase useCase.UseCase
+	userUseCase useCaseF.UseCase
 }
 
-func NewUserController(useCase *useCase.UseCase) *UserController {
+func NewUserController(useCase *useCaseF.UseCase) *UserController {
 	return &UserController{
 		userUseCase: *useCase,
 	}
@@ -159,7 +157,11 @@ func (us *UserController) Login(c *gin.Context) {
 		"email": user.Email,
 		"role":  user.Role,
 	}
-	us.userUseCase.JwtAuth.SendSecurityTokenToClinet(c, jwtBody)
+	securityToken, timeDuration := us.userUseCase.JwtAuth.GenerateSecurityToken(jwtBody)
+	// sending jwt to client as cookie
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(infrastructure.CURR_USER, securityToken, int(time.Now().Add(*timeDuration).Unix()), "", "", false, true) // the int(time.Now().Add(auth.TokenExpirationTime).Unix()) part could be a field of the jwtAuth structure
+
 }
 func (us *UserController) GiveMeMyInfo(c *gin.Context) {
 	userResult, exists := c.Get(infrastructure.CURR_USER)

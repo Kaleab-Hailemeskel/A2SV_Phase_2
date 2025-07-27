@@ -19,8 +19,12 @@ func NewUserAuth(userUseCase_ *useCase.UseCase) *UserAuth {
 	}
 }
 func (uc *UserAuth) Authentication(ctx *gin.Context) {
-
-	userEmail, err := uc.userUseCase.JwtAuth.GetSecurityTokenFromClinet(ctx)
+	tokenString, err := ctx.Cookie(infrastructure.HEADER)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": err.Error() + " >> cookie not found"})
+		return
+	}
+	userEmail, err := uc.userUseCase.JwtAuth.GetUserEmailFromSecurityToken(tokenString)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
