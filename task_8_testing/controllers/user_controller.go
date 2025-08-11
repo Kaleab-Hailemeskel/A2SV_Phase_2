@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"task_8_testing/infrastructure"
 	"task_8_testing/models"
@@ -18,9 +19,10 @@ func NewUserController(ucase models.IUseCase) *UserController {
 	}
 }
 func (us *UserController) Register(c *gin.Context) {
+	log.Println("✖️✖️✖️✖️✖️✖️")
 	var user models.UserDTO
 	if c.ShouldBindBodyWithJSON(&user) != nil {
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Error": "Invalid User type"})
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Error": "Invalid User type aka Invalid Payload"})
 		return
 	}
 	user.Role = models.USER
@@ -56,7 +58,7 @@ func (us *UserController) GiveMeMyInfo(c *gin.Context) {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"message": "IMPOSSIBLEEEEE"})
 		return
 	}
-	var realUser = userResult.(models.User)
+	var realUser = userResult.(models.UserDTO)
 	realUser.Password = "**HIDDEN**"
 	c.IndentedJSON(http.StatusAccepted, gin.H{"Current User": realUser})
 }
