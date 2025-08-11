@@ -2,6 +2,7 @@ package useCaseF
 
 import (
 	"fmt"
+	"log"
 	"task_8_testing/models"
 	"time"
 
@@ -86,19 +87,7 @@ func (uc *UseCase) DeleteTask(requestID, userEmail string) error {
 func (uc *UseCase) CreatNewTask(newTask *models.TaskDTO) (*models.TaskDTO, error) {
 	return uc.taskDataBase.InsertOne(newTask)
 }
-func (uc *UseCase) EditTaskByID(taskID, userEmail string, updatedTask *models.TaskDTO) (*models.TaskDTO, error) {
 
-	taskIDObj, err := primitive.ObjectIDFromHex(taskID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid taskID")
-	}
-
-	err = uc.CheckOwnership(taskIDObj, userEmail)
-	if err != nil {
-		return nil, err
-	}
-	return uc.taskDataBase.UpdateOne(taskIDObj, updatedTask)
-}
 func (uc *UseCase) GetAllTask(userEmail string) ([]*models.TaskDTO, error) {
 	return uc.taskDataBase.FindAllTasks(userEmail)
 }
@@ -133,6 +122,7 @@ func (uc *UseCase) UpdateTask(taskID, userEmail string, task *models.TaskDTO) (*
 	if err != nil {
 		return nil, err
 	}
+	log.Println("✅ Passed to TAsk DAtabBAse for UpdateOne")
 	return uc.taskDataBase.UpdateOne(taskIDObj, task)
 }
 func (uc *UseCase) CloseALLDBConnection() error {

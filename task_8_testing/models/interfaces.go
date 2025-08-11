@@ -49,7 +49,6 @@ type IUseCase interface {
 	GetUserWithEmail(userEmail string) (*UserDTO, error)
 	DeleteTask(requestID, userEmail string) error
 	CreatNewTask(newTask *TaskDTO) (*TaskDTO, error)
-	EditTaskByID(taskID, userEmail string, updatedTask *TaskDTO) (*TaskDTO, error)
 	GetAllTask(userEmail string) ([]*TaskDTO, error)
 	GetTaskByID(taskID, userEmail string) (*TaskDTO, error)
 	CheckOwnership(taskID primitive.ObjectID, userEmail string) error

@@ -54,6 +54,7 @@ func (taskDB *TaskDB) CheckTaskExistance(taskID primitive.ObjectID) bool {
 	return err == nil
 }
 func (taskDB *TaskDB) FindAllTasks(userEmail string) ([]*models.TaskDTO, error) {
+	log.Println("🦌 Deep into the DB")
 	var filter primitive.M
 	if userEmail != "" {
 		filter = bson.M{"owneremail": userEmail}
@@ -102,10 +103,9 @@ func (taskDB *TaskDB) UpdateOne(taskID primitive.ObjectID, updatedTask *models.T
 	if taskID != updatedTask.ID && taskDB.CheckTaskExistance(updatedTask.ID) {
 		return nil, errors.New("task With The new ID already exists, Use Unique ID")
 	}
-	filter := bson.M{"id": taskID}
+	filter := bson.M{"_id": taskID}
 
 	updateFilter := bson.M{"$set": bson.M{
-		"id":          updatedTask.ID,
 		"title":       updatedTask.Title,
 		"description": updatedTask.Description,
 		"due_date":    updatedTask.DueDate,

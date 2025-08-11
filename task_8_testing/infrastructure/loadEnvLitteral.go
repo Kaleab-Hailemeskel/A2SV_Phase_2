@@ -3,6 +3,8 @@ package infrastructure
 import (
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -19,6 +21,10 @@ var (
 )
 
 func InitEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 	CONNECTION_STRING = getEnv("CONNECTION_STRING")
 	USER_DB = getEnv("USER_DB")
 	USER_COLLECTION_NAME = getEnv("USER_COLLECTION_NAME")

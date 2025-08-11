@@ -8,7 +8,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func main() { //
+func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -17,5 +17,4 @@ func main() { //
 
 	port_number := "8081"
 	router.StartEngine(port_number)
-
 }
