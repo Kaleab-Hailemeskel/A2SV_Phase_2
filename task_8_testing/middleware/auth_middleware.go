@@ -13,7 +13,7 @@ type UserAuth struct {
 	userDB     models.IUserDataBase
 }
 
-func NewUserAuth(jwt models.IAuthentication, userDataBase models.IUserDataBase, taskDataBase models.ITaskDataBase) *UserAuth {
+func NewUserAuth(jwt models.IAuthentication, userDataBase models.IUserDataBase) models.IUserAuth {
 	return &UserAuth{
 		jwtHandler: jwt,
 		userDB:     userDataBase,

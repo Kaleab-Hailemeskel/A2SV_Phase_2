@@ -2,12 +2,12 @@ package router
 
 import (
 	"task_8_testing/controllers"
-	"task_8_testing/middleware"
+	"task_8_testing/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-func StartProtectedRouter(router *gin.Engine, userAuth *middleware.UserAuth, controllers *controllers.TaskController, control *controllers.UserController) {
+func StartProtectedRouter(router *gin.Engine, userAuth models.IUserAuth, controllers *controllers.TaskController, control *controllers.UserController) {
 
 	needAuthentication := router.Group("")
 	{

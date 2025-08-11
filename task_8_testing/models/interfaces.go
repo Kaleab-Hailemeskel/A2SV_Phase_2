@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -33,7 +34,9 @@ type IAuthentication interface {
 	GenerateSecurityToken(JWTBody map[string]interface{}) (string, time.Duration)
 	GetUserID(token *jwt.Token) (*primitive.ObjectID, error)
 }
-
+type IUserAuth interface {
+	Authentication(ctx *gin.Context)
+}
 type IPasswordService interface {
 	HashPassword(orginalPass string) (string, error)
 	IsCorrectPass(orginalPass string, hashedPass string) bool

@@ -27,8 +27,10 @@ func StartEngine(port_number string) {
 	newTaskDB := data.NewTaskDataBaseService()
 	newJwtAuth := infrastructure.NewJWTAuth()
 	newPassServ := infrastructure.NewPasswordService()
+
+	userAuth := middleware.NewUserAuth(newJwtAuth, newUserDB)
 	usecase := useCaseF.NewUseCase(newUserDB, newTaskDB, newJwtAuth, newPassServ)
-	userAuth := middleware.NewUserAuth(newJwtAuth, newUserDB, newTaskDB)
+	
 	userC := controllers.NewUserController(usecase)
 	taskC := controllers.NewTaskController(usecase)
 	StartPublicRouter(router, userC)

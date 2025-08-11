@@ -43,7 +43,7 @@ type UnitTestAuthMiddleware struct {
 	mockJwt    *mocks.IAuthentication
 	mockUserDB *mocks.IUserDataBase
 	mockTaskDB *mocks.ITaskDataBase
-	mainAuth   middleware.UserAuth
+	mainAuth   *mocks.IUserAuth
 
 	route *gin.Engine
 }
@@ -146,7 +146,7 @@ func (un *UnitTestAuthMiddleware) SetupTest() {
 	un.mockUserDB = new(mocks.IUserDataBase)
 	un.mockTaskDB = new(mocks.ITaskDataBase)
 	un.mockJwt = new(mocks.IAuthentication)
-	un.mainAuth = *middleware.NewUserAuth(un.mockJwt, un.mockUserDB, un.mockTaskDB)
+	un.mainAuth = middleware.NewUserAuth(un.mockJwt, un.mockUserDB)
 
 	un.route = gin.Default()
 
