@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // ! Should Have it's own interface of Authenticatoin interface
@@ -67,4 +68,11 @@ func (auth *jWTAuth) GetUserEmailFromSecurityToken(token *jwt.Token) (string, er
 		return userEmail, nil // valid return
 	}
 	return "", fmt.Errorf("jwtMapClaims raised an error")
+}
+func (auth *jWTAuth) GetUserID(token *jwt.Token) (*primitive.ObjectID, error) {
+	if claims, ok := token.Claims.(jwt.MapClaims); ok {
+		userID := claims["id"].(primitive.ObjectID)
+		return &userID, nil // valid return
+	}
+	return nil, fmt.Errorf("jwtMapClaims raised an error")
 }

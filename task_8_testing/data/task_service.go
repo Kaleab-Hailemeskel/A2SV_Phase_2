@@ -49,11 +49,11 @@ func InitDataBase(connectionString, dbName, collectionName string) *mongo.Collec
 func (taskDB *TaskDB) CloseDataBase() error {
 	return taskDB.Coll.Database().Client().Disconnect(taskDB.Contxt)
 }
-func (taskDB *TaskDB) CheckTaskExistance(taskID string) bool {
+func (taskDB *TaskDB) CheckTaskExistance(taskID primitive.ObjectID) bool {
 	_, err := taskDB.FindByID(taskID)
 	return err == nil
 }
-func (taskDB *TaskDB) FindAllTasks(userEmail string) (*[]models.Task, error) {
+func (taskDB *TaskDB) FindAllTasks(userEmail string) ([]*models.TaskDTO, error) {
 	var filter primitive.M
 	if userEmail != "" {
 		filter = bson.M{"owneremail": userEmail}
@@ -66,26 +66,26 @@ func (taskDB *TaskDB) FindAllTasks(userEmail string) (*[]models.Task, error) {
 	}
 	defer resultCursors.Close(context.TODO())
 
-	tasks := make([]models.Task, 0)
+	tasks := make([]*models.TaskDTO, 0)
 	for resultCursors.Next(context.TODO()) {
-		var task models.Task
+		var task models.TaskDTO
 		err := resultCursors.Decode(&task)
 		if err != nil {
 		}
-		tasks = append(tasks, task)
+		tasks = append(tasks, &task)
 	}
-	return &tasks, nil
+	return tasks, nil
 }
-func (taskDB *TaskDB) FindByID(taskID string) (*models.Task, error) {
+func (taskDB *TaskDB) FindByID(taskID primitive.ObjectID) (*models.TaskDTO, error) {
 	filter := bson.M{"id": taskID}
-	var taskResult *models.Task
+	var taskResult *models.TaskDTO
 	err := taskDB.Coll.FindOne(taskDB.Contxt, filter).Decode(&taskResult)
 	if err != nil {
 		return nil, err
 	}
 	return taskResult, nil
 }
-func (taskDB *TaskDB) DeleteOne(taskID string) error {
+func (taskDB *TaskDB) DeleteOne(taskID primitive.ObjectID) error {
 	filter := bson.M{"id": taskID}
 	deleteResult, err := taskDB.Coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
@@ -94,13 +94,13 @@ func (taskDB *TaskDB) DeleteOne(taskID string) error {
 	}
 	if deleteResult.DeletedCount == 0 {
 
-		return errors.New("task with ID " + taskID + " isn't found")
+		return errors.New("task with ID " + taskID.Hex() + " isn't found")
 	}
 	return nil
 }
-func (taskDB *TaskDB) UpdateOne(taskID string, updatedTask models.Task) error {
+func (taskDB *TaskDB) UpdateOne(taskID primitive.ObjectID, updatedTask *models.TaskDTO) (*models.TaskDTO, error) {
 	if taskID != updatedTask.ID && taskDB.CheckTaskExistance(updatedTask.ID) {
-		return errors.New("task With The new ID already exists, Use Unique ID")
+		return nil, errors.New("task With The new ID already exists, Use Unique ID")
 	}
 	filter := bson.M{"id": taskID}
 
@@ -112,21 +112,20 @@ func (taskDB *TaskDB) UpdateOne(taskID string, updatedTask models.Task) error {
 		"status":      updatedTask.Status}}
 	updateResult, err := taskDB.Coll.UpdateOne(taskDB.Contxt, filter, updateFilter)
 	if err != nil {
-
-		return err
+		return nil, err
 	}
 	if updateResult.ModifiedCount == 0 {
-		return errors.New("no Data Modified")
+		return nil, errors.New("no Data Modified")
 	}
-	return nil
+	return updatedTask, nil
 }
-func (taskDB *TaskDB) InsertOne(t models.Task) error {
+func (taskDB *TaskDB) InsertOne(t *models.TaskDTO) (*models.TaskDTO, error) {
 	if taskDB.CheckTaskExistance(t.ID) {
-		return errors.New("task with ID < " + t.ID + " > Already exists.")
+		return nil, errors.New("task with ID < " + t.ID.Hex() + " > Already exists.")
 	}
 	_, err := taskDB.Coll.InsertOne(taskDB.Contxt, t)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return t, nil
 }

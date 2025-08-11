@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"task_8_testing/infrastructure"
 	"task_8_testing/models"
@@ -10,68 +9,45 @@ import (
 )
 
 type UserController struct {
-	userDB      models.IUserDataBase
-	passService models.IPasswordService
-	jwtHandler  models.IAuthentication
+	useCase models.IUseCase
 }
 
-func NewUserController(userDataBase models.IUserDataBase, passwordService models.IPasswordService, jwt models.IAuthentication) *UserController {
+func NewUserController(ucase models.IUseCase) *UserController {
 	return &UserController{
-		userDB:      userDataBase,
-		passService: passwordService,
-		jwtHandler:  jwt,
+		useCase: ucase,
 	}
 }
 func (us *UserController) Register(c *gin.Context) {
-	var user UserDTO
+	var user models.UserDTO
 	if c.ShouldBindBodyWithJSON(&user) != nil {
 		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Error": "Invalid User type"})
 		return
 	}
-	userExists := us.userDB.CheckUserExistance(user.Email)
-	if userExists {
-		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Error": "User already exists"})
+	user.Role = models.USER
+	// from usecase try to register a user
+	if user, err := us.useCase.Register(&user); err != nil {
+		c.AbortWithStatusJSON(http.StatusNotAcceptable, gin.H{"Error": err.Error()})
 		return
+	} else {
+		c.IndentedJSON(http.StatusOK, gin.H{
+			"message": "User registered successfully",
+			"user":    user,
+		})
 	}
-	err := us.userDB.StoreUser(changeUserDTO(&user))
-
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
-		return
-	}
-	c.IndentedJSON(http.StatusOK, gin.H{"message": "User registered successfully"})
 
 }
 func (us *UserController) Login(c *gin.Context) {
-	var user UserDTO
+	var user models.UserDTO
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(400, gin.H{"error": "Invalid request payload"})
 		return
 	}
-	userFromDB, err := us.userDB.FindUserByEmail(user.Email)
+	accessToken, expTime, err := us.useCase.LoginHandler(&user)
 	if err != nil {
-		c.AbortWithError(http.StatusNotFound, fmt.Errorf("user didn't exist, better register"))
-		return
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": err.Error()})
 	}
-	correctPassword := us.passService.IsCorrectPass(user.Password, userFromDB.Password)
-	if !correctPassword {
-		c.AbortWithError(http.StatusBadRequest, fmt.Errorf("incorrect email or Password"))
-		return
-	}
-
-	jwtBody := map[string]interface{}{
-		"email": userFromDB.Email,
-		"role":  userFromDB.Role,
-	}
-
-	securityToken, timeDuration := us.jwtHandler.GenerateSecurityToken(jwtBody)
-	if securityToken == "" {
-		c.AbortWithError(http.StatusNotFound, fmt.Errorf("can't generate jwt"))
-		return
-	}
-	// sending jwt to client as cookie
 	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(infrastructure.HEADER, securityToken, int((timeDuration).Seconds()), "", "", false, true) // the int(time.Now().Add(auth.TokenExpirationTime).Unix()) part could be a field of the jwtAuth structure
+	c.SetCookie(infrastructure.HEADER, accessToken, int((expTime).Seconds()), "", "", false, true) // the int(time.Now().Add(auth.TokenExpirationTime).Unix()) part could be a field of the jwtAuth structure
 
 }
 func (us *UserController) GiveMeMyInfo(c *gin.Context) {

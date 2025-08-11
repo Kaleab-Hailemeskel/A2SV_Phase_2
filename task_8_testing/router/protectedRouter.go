@@ -9,21 +9,23 @@ import (
 
 func StartProtectedRouter(router *gin.Engine, userAuth *middleware.UserAuth, controllers *controllers.TaskController, control *controllers.UserController) {
 
-	router.GET("/whoAmI", userAuth.Authentication, control.GiveMeMyInfo)
-	taskNeedAuthentication := router.Group("/tasks")
+	needAuthentication := router.Group("")
 	{
-		taskNeedAuthentication.Use(userAuth.Authentication)
+		needAuthentication.Use(userAuth.Authentication)
 
-		taskNeedAuthentication.POST("", controllers.PostTask)
-		taskNeedAuthentication.GET("", controllers.GetTasks)
+		needAuthentication.GET("/whoAmI", control.GiveMeMyInfo)
 
-		tasksGroup := taskNeedAuthentication.Group("/:id")
+		tasksGroup := needAuthentication.Group("/tasks")
 		{
-			tasksGroup.Use(userAuth.Authorization)
-
-			tasksGroup.GET("", controllers.GetTaskByID)
-			tasksGroup.PUT("", controllers.PutTaskByID)
-			tasksGroup.DELETE("", controllers.DeleteTaskByID)
+			tasksGroup.POST("", controllers.PostTask)
+			tasksGroup.GET("", controllers.GetTasks)
+			taskIDGroup := tasksGroup.Group("/:id")
+			{
+				taskIDGroup.GET("", controllers.GetTaskByID)
+				taskIDGroup.PUT("", controllers.PutTaskByID)
+				taskIDGroup.DELETE("", controllers.DeleteTaskByID)
+			}
 		}
+
 	}
 }

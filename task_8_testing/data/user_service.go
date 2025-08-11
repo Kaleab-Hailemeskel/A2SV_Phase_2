@@ -7,6 +7,7 @@ import (
 	"task_8_testing/models"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,27 +26,43 @@ func NewUserDataBase() models.IUserDataBase {
 		Contxt: context.TODO(),
 	}
 }
-func (taskDB *UserDB) CloseDataBase() error { //! a function with The same parameter exists in the task_service.go
+func (taskDB *UserDB) CloseDataBase() error {
 	return taskDB.Coll.Database().Client().Disconnect(taskDB.Contxt)
 }
-func (userDB *UserDB) FindUserByEmail(userEmail string) (*models.User, error) {
+func (userDB *UserDB) FindUserByID(userID primitive.ObjectID) (*models.UserDTO, error) {
 
-	filter := bson.M{"email": userEmail}
-	var user models.User
+	filter := bson.M{"_id": userID}
+	var user models.UserDTO
 	err := userDB.Coll.FindOne(userDB.Contxt, filter).Decode(&user)
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
 }
-func (userDB *UserDB) StoreUser(user *models.User) error {
-	_, err := userDB.Coll.InsertOne(userDB.Contxt, user)
+func (userDB *UserDB) FindUserByEmail(userEmail string) (*models.UserDTO, error) {
+
+	filter := bson.M{"email": userEmail}
+	var user models.UserDTO
+	err := userDB.Coll.FindOne(userDB.Contxt, filter).Decode(&user)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &user, nil
+}
+func (userDB *UserDB) StoreUser(user *models.User) (*models.UserDTO, error) {
+	insert, err := userDB.Coll.InsertOne(userDB.Contxt, user)
+	if err != nil {
+		return nil, err
+	}
+	userDTO := models.ChangeUserModel(user)
+	userDTO.ID = insert.InsertedID.(primitive.ObjectID)
+	return userDTO, nil
 }
 func (userDB *UserDB) CheckUserExistance(userEmail string) bool {
 	_, err := userDB.FindUserByEmail(userEmail)
+	return err == nil
+}
+func (userDB *UserDB) CheckUserExistanceByID(userID primitive.ObjectID) bool {
+	_, err := userDB.FindUserByID(userID)
 	return err == nil
 }

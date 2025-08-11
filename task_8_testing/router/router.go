@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"task_8_testing/useCaseF"
 	"task_8_testing/controllers"
 	"task_8_testing/data"
 	"task_8_testing/infrastructure"
@@ -26,10 +27,10 @@ func StartEngine(port_number string) {
 	newTaskDB := data.NewTaskDataBaseService()
 	newJwtAuth := infrastructure.NewJWTAuth()
 	newPassServ := infrastructure.NewPasswordService()
-
+	usecase := useCaseF.NewUseCase(newUserDB, newTaskDB, newJwtAuth, newPassServ)
 	userAuth := middleware.NewUserAuth(newJwtAuth, newUserDB, newTaskDB)
-	userC := controllers.NewUserController(newUserDB, newPassServ, newJwtAuth)
-	taskC := controllers.NewTaskController(newTaskDB)
+	userC := controllers.NewUserController(usecase)
+	taskC := controllers.NewTaskController(usecase)
 	StartPublicRouter(router, userC)
 	StartProtectedRouter(router, userAuth, taskC, userC)
 
